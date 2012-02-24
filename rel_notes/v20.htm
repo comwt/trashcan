@@ -1,0 +1,43 @@
+<html>
+<body bgcolor="#ffffff">
+<br>
+<br>
+<table border=0 cellpadding=0 cellspacing=0 width=750>
+  <tr>
+    <td>
+<h3>Release Notes</h3>
+<br>
+The following changes were made for Trash Can version 2.0:
+<p><u><b>Installation Script:</b></u><br>
+<ul>
+  <li>Changed alot of things here:</li>
+    <ul>
+      <li>Made installation smoother with better error handling.</li>
+      <li>Restore() function performs a full restore now if installation fails.</li>
+      <li>Instead of defaulting to purge trash older than 7 days the user is prompted for their preference right away.</li>
+      <li>Added the configurization of the new feature that handles Trash Can Capacity.</li>
+      <li>Version checking enabled.</li>
+      <li>trash.conf defaults are set during installation now.</li>
+      <li>File permissions via chmod are set for the trash directory and contents.</li>
+      <li>The profile choice has been revised completely, even offering the user to specify one other than those listed.<br>Includes verification sequence.</li>
+      <li>More possible binary directory paths have been added for detection (for root install).</li>
+    </ul>
+</ul></p>
+<p><u><b>Executable:</b></u><br>
+<ul>
+  <li>Added ability to let USER change the storage capacity of their Trash Can.</li>
+  <li>A notification (soft warning) is displayed when you have reached 75% trash can capacity.</li>
+  <li>A notification (hard warning) is displayed when you have reached 100% trash can capacity and suggestions are given in order to clean out the can.  You can no longer remove files through Trash Can until action is taken.</li>
+  <li>Changed a few program options to allow trash.sh to run on more platforms (sorry for any earlier inconvenience).<br><br>Many thanks for the advice of one programmer in particular for pointing out Linux's need of the -P option with tar (not needed on SCO).  This was, no doubt, causing many grief where on certain linux systems the purpose of TrashCan was thwarted by not having this option.  Also for advising '^.*' instead of '^*' in trash.sh (same problem).  Thanks Tim.</li>
+</ul></p>
+<p><u><b>Un-Install Script:</b></u><br>
+<ul>
+  <li>Smoothed out flow a little.</li>
+  <li>You must first re-install Trash Can 2.0 over your previously installed version for it to work.</li>
+  <li>Re-Installing will not delete your old trash since the install script recognizes its existance.</li>
+</ul>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<html>
+<body bgcolor="#f7f7f7" link="#0000dd" vlink="#0000dd">
+<a name="TOP"></a>
+<table cellpadding=30 border=0><tr><td>
+<center>
+<font size=+1 color="#333333">This FAQ is a work in progress</font>
+</center>
+<br>
+
+
+<p><font size=+2 color="#666666"> QUESTIONS</font></p>
+
+<p>
+<strong>1)</strong> &nbsp;<a href="#q1">Why does nothing happen when I execute the &acute;purge&acute; command?</a><br>
+<strong>2)</strong> &nbsp;<a href="#q2">&quot;bash: purge: command not found&quot; - why is this happening?</a><br>
+<strong>3)</strong> &nbsp;<a href="#q3">Trying to install and get &quot;Syntax error: `==&acute; is not expected.&quot; - why?</a><br>
+<strong>4)</strong> &nbsp;<a href="#q4">What is affected in my filesystem when I install trashcan?</a><br>
+<strong>5)</strong> &nbsp;<a href="#q5">How can I manually delete/uninstall trashcan?</a><br>
+<strong>6)</strong> &nbsp;<a href="#q6">Help! &nbsp;The uninstall script does not work...</a><br>
+<strong>7)</strong> &nbsp;<a href="#q7">Will trashcan ever run under csh (C shell), sh (bourne shell) or the like?</a><br>
+<strong>8)</strong> &nbsp;<a href="#q8">I found some bugs, what do I do?</a><br>
+<strong>9)</strong> &nbsp;<a href="#q9">How do I contact you?</a>
+</p>
+
+<br>
+
+<p><font size=+2 color="#666666"> ANSWERS</font></p>
+
+<p><strong>1)</strong> &nbsp;<font color="#dd0000"><em><a name="q1">Why</a> does nothing happen when I execute the &acute;purge&acute; command?</em></font><br>
+
+   <blockquote>The feature &acute;purge&acute; is meant to run once a day, for your convenience.<br>
+   Once it runs, on the first occurence of the day, it will update a <br>
+   status field in trash.conf.  This in turn lets trash.sh know that<br>
+   purge has already been run if you have subsequent logins or what not.<br><br><a href="#TOP">top</a></blockquote></p>
+
+
+   
+<p><strong>2)</strong> &nbsp;<font color="#dd0000"><em><a name="q2">&quot;bash:</a> purge: command not found&quot; - why is this happening?</em></font>
+ 
+   <blockquote>This appears to be some sort of Bash version problem.  The only occurrences<br>
+   I&acute;ve seen this happen with appear to be RedHat Linux 7.* related where the<br>
+   user installed trashcan using .bashrc as their profile.  If you encounter<br>
+   this error, uninstall the trashcan and then re-install using .bash_profile<br>
+   instead of .bashrc.   (If you find another disto of linux where this is<br>
+   happening, please let me know so I can jot them down.)<br><br><a href="#TOP">top</a></blockquote></p>
+
+   
+<p><strong>3)</strong> &nbsp;<font color="#dd0000"><em><a name="q3">&quot;Trying</a> to install and get &quot;Syntax error: `==&acute; is not expected.&quot;</em></font>
+ 
+   <blockquote>You are probably using some sort of BSD version of linux or AIX.  These like<br>
+   to use what is commonly known as the assignment operator &quot;=&quot; for string equality<br>
+   testing, instead of the c-type &quot;==&quot;.  A fix has been made for the not-yet-released<br>
+   version of trashcan (3.0), but if you would like to use trashcan until then, try modifying<br>
+   trash_install, trash_uninstall and contents/trash.sh with the following SED command<br><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>sed -e '^[^.awk]*if /==/=/g' trash_install > SED_Temp.out; mv SED_Temp.out trash_install</strong><br><br><br> 
+   Of course, &quot;trash_install&quot; will need to be replaced with the other two files names respectively.<br><br><a href="#TOP">top</a></blockquote></p>
+
+   
+<p><strong>4)</strong> &nbsp;<font color="#dd0000"><em><a name="q4">What</a> is affected in my filesystem when I install trashcan?</em></font>
+
+   <ol type="a"><li>The profile you chose (i.e.  .bashrc, .bash_profile, .profile) had<br>
+      aliases for trashcan specific commands written to it.</li>
+   <li>A new directory was created (i.e.  ~/.trash, ~/.trash2), which contains<br>
+      everything else.</li>
+   <li>trash.sh could also be in a /bin directory depending on if you<br>
+      installed as &acute;root&acute; and chose that option instead of your home<br>
+      directory.</li></ol>
+
+   <blockquote><a href="#TOP">top</a></blockquote></p>
+   
+   
+<p><strong>5)</strong> &nbsp;<font color="#dd0000"><em><a name="q5">How</a> can I manually delete/uninstall trashcan?</em></font>
+
+   <ol type="a"><li>Edit the profile you chose during installation, removing the trashcan aliases<br>
+      and the call of purge.</li>
+   <li>Delete the .trash directory that was created using one of the following<br>
+      commands:<br><br>
+
+        /usr/bin/rm -fr ~/.trash<br>
+        /bin/rm -fr ~/.trash</li><br><br>
+
+   <li>If trash.sh was installed by root in a /bin directory, it needs to<br>
+      be deleted.</li></ol>
+
+   <blockquote>That&acute;s it!<br><br><a href="#TOP">top</a></blockquote></p>
+
+   
+<p><strong>6)</strong> &nbsp;<font color="#dd0000"><em><a name="q6">Help!</a> &nbsp;The uninstall script does not work...</em></font>
+
+   <blockquote>Sorry about this folks, I have no idea what I was thinking when I wrote<br>
+   trash_uninstall. &nbsp;Until trashcan-3.0 is finished, try manually uninstalling<br>
+   trashcan as described above. &nbsp;Or you could edit trash_uninstall changing<br>
+   the word 'root' to your login name (that <em>should</em> work).<br><br><a href="#TOP">top</a></blockquote></p>
+<!--
+   <blockquote>Sorry about this folks, I have no idea what I was thinking when I wrote the<br>
+   pre trashcan-3.0 uninstall script.  Likely, you are using an old version,<br>
+   so just install the latest version, then you should have no problem<br>
+   uninstalling.<br><br><a href="#TOP">top</a></blockquote></p>
+-->
+
+   
+<p><strong>7)</strong> &nbsp;<font color="#dd0000"><em><a name="q7">Will</a> trashcan ever run under csh (C shell), sh (bourne shell) or the like?</em></font>
+
+   <blockquote>Honestly, I don&acute;t program in those shells, but from what I&acute;ve seen it would<br>
+   require a complete re-write of trashcan for each shell.  So, being the time<br>
+   comprehensive (lazy) person that I am, I will not be translating it to other<br>
+   shells.<br><br>
+
+   HOWEVER,<br><br>
+
+   As a remedy (and hopefully this pleases you folks), I am currently in the<br>
+   process of writing a Perl version! &nbsp;&nbsp;:-o<br><br>
+
+   I will, of course, keep maintaining the bash related version too.<br><br><a href="#TOP">top</a></blockquote></p>
+
+   
+<p><strong>8)</strong> &nbsp;<font color="#dd0000"><em><a name="q8">I</a> found some bugs, what do I do?</em></font>
+
+   <blockquote>Well, first off, are you using the latest version?  If not, just go grab<br>
+   yourself a copy of it, install it, and see if it fixes your problem.<br><br>
+
+   If you are using the latest version, please feel free to email me with<br>
+   details of the error.  I plan on releasing a --debug option on one of the<br>
+   upcoming releases so that we can have all kinds of nifty explanitory<br>
+   output, which you could just copy and paste in an email to me.<br><br><a href="#TOP">top</a></blockquote></p>
+
+   
+<p><strong>9)</strong> &nbsp;<font color="#dd0000"><em><a name="q9">How</a> do I contact you?</em></font>
+
+   <blockquote>Try sending me an e-mail to: <a href="mailto:gnu-trashcan@comwt.com">gnu-trashcan@comwt.com</a>
+   <br><br><a href="#TOP">top</a></blockquote></p>
+
+   
+</td></tr></table>
+<br>
+</body>
+</html>
