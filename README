@@ -1,0 +1,11 @@
+DESCRIPTION:
+
+  Trash Can is a recycle bin implementation for the command line. It is a set
+  of scripts that can be run with ksh, bash, or zsh. It has commands for file
+  removal, file restoration (to the original path), permanent deletion of
+  particular files from the trash can, automatic purging of trash that is more
+  than a certain number of days old, completely emptying the trash can,
+  configuring trash can storage capacity, and displaying trash can disk usage.
+  Trash is compressed to take up less room.
+
+
