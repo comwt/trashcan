@@ -212,7 +212,7 @@ VerChk() {
     mv -f ${M_BIN}/trash.sh ${HDIR}/backup/trash.sh
 
     cp ./trash.sh ${M_BIN}/trash.sh
-    chmod 550 ${M_BIN}/trash.sh
+    chmod 555 ${M_BIN}/trash.sh
 
   else
 
@@ -775,6 +775,7 @@ You have three options:
           done
 
         M_TDIR="${M_TRASH_USER}/.trash${M_NUM}"
+
         echo "DONE"
 
         ;;
@@ -1013,7 +1014,7 @@ ChkExistTrash() {
   else
 
     cp ${HDIR}/trash.sh ${M_BIN}/trash.sh
-    chmod 550 ${M_BIN}/trash.sh
+    chmod 555 ${M_BIN}/trash.sh
 
   fi
 
@@ -1312,6 +1313,15 @@ for M_TRASH_USER in `cat ${F_USERS_TEMP}`
     SetConfDef     #-- Function Call (Set Trash Configuration File Defaults)
     AddConfUIS     #-- Function Call (Write Un-Install Specifics to trash.conf)
     Finalize       #-- Function Call (Writes profile aliases, etc...)
+
+    #- Need to change ownership of all .trash files to USER.
+    #--------------------------------------------------------
+    if [[ ${M_USE_DEFAULTS} -eq 1 ]]; then
+      CURR_TRASH_USER=`echo ${M_TRASH_USER} | awk -F"/" "{print \\$NF}"`
+      echo $TC_NCR1 "  Changing recursive ownership of trash directory to ${CURR_TRASH_USER} ..... $TC_NCR2"
+      chown -R ${CURR_TRASH_USER} ${M_TDIR}
+      echo "DONE"
+    fi
 
   done
 

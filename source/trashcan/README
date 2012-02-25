@@ -12,7 +12,7 @@ INSTALLATION HOW-TO:
 
     1) cd to the directory for the type of trashcan you want to install/run:
 
-        shell = korn, bourne again, or zshell (ksh/bash/zsh) (others ?)
+        shell = korn, bourne again, or zshell (ksh/bash/zsh)
         perl  = perl version
 
     2) run trash_install
@@ -30,7 +30,7 @@ UN-INSTALLATION HOW-TO:
 ABOUT:
 
   Trash Can is a command line recycle bin for Linux/*NIX based systems.
-  ksh, bash, sh, csh, zsh or perl is needed to operate.
+  ksh, bash or zsh is needed to operate.
 
 ABILITIES INCLUDE:
 
@@ -58,5 +58,6 @@ OTHER ABILITIES:
     nears maximum capacity.
  -  Install script is included for easy installation.
  -  Un-Install script is included for easy un-installation.
+ -  True multiple-user install/uninstall capabilities.
 
 URL: http://www.yoursitemaster.com/open_source/projects/trashcan/index.htm
