@@ -1,0 +1,12 @@
+gzip|f|
+cut|f|
+gunzip|f|
+grep|f|
+sed|f|
+awk|f|
+rm|f|
+mv|f|
+tar|f|
+banner||
+clear||
+mail||
