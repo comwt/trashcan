@@ -32,7 +32,7 @@
 #            3) Daily flushes out files in trash.list older 
 #               than user specified number of days old.
 ################################################################################
-#- Version:  Trash Can 3.0
+#- Version:  Trash Can 3.3
 #-------------------------------------------------------------------------------
 
 #- Trash Directory
@@ -84,10 +84,10 @@ shift                             #-- pull off the option
 #- Allows for re-use of code in '-rest)' section of case statement
 #  for permanent deletion of a single file rather than restore
 #-------------------------------------------------------------------
-if [[ $3 == "-d" ]]; then
-  OF=$4                           #-- Original File name
+if [[ $2 == "-d" ]]; then
+  OF=$3                           #-- Original File name
 else
-  OF=$3
+  OF=$2
 fi
 
 NF=""                             #-- New File name
@@ -420,7 +420,7 @@ case "${OPT}" in
             cat ${TEMPLIST} | more
             echo "" 
 
-            if [[ $3 == "-d" ]]; then
+            if [[ $2 == "-d" ]]; then
               echo ${NCR1} "Select the file number to be permanently deleted: ${NCR2}"
               read ANSW
             else
@@ -440,7 +440,7 @@ case "${OPT}" in
             #- If user chooses to EXIT.
             #--------------------------
             if [[ ${ANSW} -eq ${LC} ]]; then
-              if [[ $3 == "-d" ]]; then
+              if [[ $2 == "-d" ]]; then
                 echo "No files permanently deleted."
               else
                 echo "No files restored."
@@ -484,7 +484,7 @@ case "${OPT}" in
           #-------------------------------------------
           OF=`awk -F"|" "\\$1 == ${ROW[${ANSW}]} {print \\$3}" ${TL}`
 
-          if [[ $3 != "-d" ]]; then
+          if [[ $2 != "-d" ]]; then
 
             #- See if file already exists in restore path
             #  Could have used -a option alone, but wasn't
@@ -529,7 +529,7 @@ case "${OPT}" in
 
           fi
 
-          if [[ $3 == "-d" ]]; then
+          if [[ $2 == "-d" ]]; then
 
             echo ""
             rm ${TC}/${NF}.tar.gz && echo "${OF} has been permanently deleted."; echo ""
