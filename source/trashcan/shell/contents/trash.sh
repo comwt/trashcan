@@ -1,3 +1,4 @@
+#set -x
 ################################################################################
 #
 # Copyright (C) 2001-2003
@@ -78,6 +79,7 @@ MTWARNFLAG=0                      #-- Max Trash Warning Flag
 OLASTYEAR=${LASTYEAR}             #-- Original 'LASTYEAR'
 
 OPT=$1                            #-- Option (-rm=rm; -rest=restore)
+shift                             #-- pull off the option
 
 #- Allows for re-use of code in '-rest)' section of case statement
 #  for permanent deletion of a single file rather than restore
@@ -107,23 +109,26 @@ case "${OPT}" in
   -rm  )  #--  Remove and log a file or files
 
         for i in $@
-          do
+        do
 
-            if [[ ${i} != "-rm" && ${i} != "${TD}" ]]; then
+          if [[ ${i} == "${TD}" ]]; then
+            continue
+          fi
 
-              #- Check trash can capacity before each file is removed.
-              #---------------------------------------------------------
-              KB=`du -k ${TC} 2>/dev/null | awk '{print $1}'`
+          #- Check trash can capacity before each file is removed.
+          #---------------------------------------------------------
+          KB=`du -k ${TC} 2>/dev/null | awk '{print $1}'`
 
-              if [[ ${KB} -ge ${MAXTRASHCAP} ]]; then
+          if [[ ${KB} -ge ${MAXTRASHCAP} ]]; then
 
-                #- The trash can has exceeded it capacity.
-                #  Notify USER of possible resolutions.
-                #-------------------------------------------
+            #-------------------------------------------
+            #- The trash can has exceeded it capacity.
+            #  Notify USER of possible resolutions.
+            #-------------------------------------------
 
-                MTWARNFLAG=1
+            MTWARNFLAG=1
 
-                echo "
+            echo "
 
       ####################################################################
       #                                                                  #
@@ -146,186 +151,195 @@ case "${OPT}" in
       ####################################################################
 
 "
-                break;
+            break;
 
-              else
+          fi
 
-                OF=${i}               #-- Assign 'i' to Original File
+          OF=${i}               #-- Assign 'i' to Original File
 
-                ################################################################
-                #  FILE CHECK - (PWD is only correct if the file being
-                #                removed is in the present working directory.
-                #                This section is needed to make sure that the
-                #                original file name and original directory
-                #                are correct if the file is being removed from 
-                #                a directory other than PWD.)
-                #---------------------------------------------------------------
-                NUMFLD=`echo ${OF} | awk -F"/" "{print NF}"`
+          ################################################################
+          #  FILE CHECK - (PWD is only correct if the file being
+          #                removed is in the present working directory.
+          #                This section is needed to make sure that the
+          #                original file name and original directory
+          #                are correct if the file is being removed from 
+          #                a directory other than PWD.)
+          #---------------------------------------------------------------
+          NUMFLD=`echo ${OF} | awk -F"/" "{print NF}"`
 
-                #- Get Original Path, if <> to $PWD
-                #--------------------------------------
-                if [[ ${NUMFLD} -gt 1 ]]; then
+          #- Get Original Path, if <> to $PWD
+          #--------------------------------------
+          if [[ ${NUMFLD} -gt 1 ]]; then
 
-                  #- Set file name
-                  #------------------------
-                  DOF=${OF}      #-- Duplicate old file
-                  OF=`echo ${DOF} | awk -F"/" "{print \\$${NUMFLD}}"`
+            #- Set file name
+            #------------------------
+            DOF=${OF}      #-- Duplicate old file
+            OF=`echo ${DOF} | awk -F"/" "{print \\$${NUMFLD}}"`
+            if [[ ${OF} == "" ]]; then
+                (( NUMFLD -= 1 ))
+                OF=`echo ${DOF} | awk -F"/" "{print \\$${NUMFLD}}"`
+#                (( NUMFLD += 1 ))
+            fi
 
-                  FLD=1          #-- Current Field
-                  OD=""          #-- Re-Initialize Old Directory
+            FLD=1          #-- Current Field
+            OD=""          #-- Re-Initialize Old Directory
 
-                  #- Decrement field count by 1 to eliminate file name
-                  #----------------------------------------------------
-                  (( NUMFLD -= 1 ))
+            #- Decrement field count by 1 to eliminate file name
+            #----------------------------------------------------
+            (( NUMFLD -= 1 ))
 
-                  #- Get the remainder of original directory
-                  #-------------------------------------------
-                  while [ ${FLD} -le ${NUMFLD} ]
-                    do
+            #- Get the remainder of original directory
+            #-------------------------------------------
+            while [ ${FLD} -le ${NUMFLD} ]
+            do
 
-                      CURR=`echo ${DOF} | awk -F"/" "{print \\$${FLD}}"`
+              CURR=`echo ${DOF} | awk -F"/" "{print \\$${FLD}}"`
+              OD="${OD}${CURR}"
 
-                      OD="${OD}${CURR}"
-
-                      #- Don't put a trailing slash if on last field
-                      #-----------------------------------------------
-                      if [[ ${FLD} -lt ${NUMFLD} ]]; then
-                        OD="${OD}/"
-                      fi
-
-                      (( FLD += 1 ))
-
-                    done
-
-                  #- This fixes the problem if . or .. and so on are used in
-                  #  the path for the file that needs to be removed, since
-                  #  these are relative paths and not absolute.
-                  #---------------------------------------------------------
-                  cd ${OD} 2>/dev/null; OD=$PWD; cd - 1>/dev/null
-
-                fi
-                #---------------------------------------------------------------
-                #  finished PWD check
-                ################################################################
-
-                VerifyRM() #-- Verify removal of Special File Types
-                {
-                  echo "Are you sure you want to remove this ${FTYPE}."
-                  echo ${NCR1} "As of yet, ${FTYPE}s have not been tested for accurate restoration? (Y/N): ${NCR2}"
-                  read ANSW
-
-                  ANSW=`echo ${ANSW} | cut -c1`
-
-                  if [[ ${ANSW} != "Y" && ${ANSW} != "y" ]]; then
-                    echo "The ${FTYPE}, ${OF} has not been removed."
-                    continue;
-                  fi
-                }
-
-                FileType()
-                {
-                  case "${FTYPE}" in
-                    l )  FTYPE="LINK  ";;
-                    - )  FTYPE="FILE  ";;
-                    d )  FTYPE="DIR   ";;
-                    D )  FTYPE="DOOR  "; VerifyRM;;
-                    b )  FTYPE="BLOCK "; VerifyRM;;
-                    c )  FTYPE="CHAR  "; VerifyRM;;
-                    p )  FTYPE="FIFO  "; VerifyRM;;
-                    s )  FTYPE="SOCKET"; VerifyRM;;
-                  esac
-                }
-
-                #- Check to see if file exists, if not, go to next file
-                #------------------------------------------------------
-                if [ -d ${OD}/${OF} ]; then
-                  FTYPE="d"
-                #elif [[ `ls ${OD}/${OF} | wc -l` -gt 0 ]]; then
-                elif [[ -f "${OD}/${OF}" ]]; then
-                  FTYPE=`ls -l ${OD}/${OF} | cut -c1`
-                else
-                  echo "File (${i}) does not exist."
-                  continue;
-                fi
-
-                FileType                     #-- Function call
-
-                #- First, permanently remove if 'core' or 'dead.letter'
-                #------------------------------------------------------
-                if [[ ${OF} == "core" || ${OF} == "dead.letter" ]]; then
-
-                  `rm ${i}`
-
-                  #- Check for success
-                  #---------------------
-                  if [ -f ${i} ]; then
-                    echo "Could not remove '${i}'."
-                  else
-                    echo "'${i}' was permanently removed."
-                  fi
-
-                  continue;
-
-                fi
-
-                #- Make sure trash can directory exists, if not create.
-                #------------------------------------------------------
-                if [ ! -d ${TC} ]; then
-                  mkdir ${TC}
-                fi
-
-                #- Assign unique ROWID and New File Name to Original File
-                #  Uses the first available number (first column).
-                #----------------------------------------------------------
-                ROWID=0
-                COUNT=0
-                STEP=1
-
-                until [[ ${ROWID} -gt 0 ]]
-                  do
-                    COUNT=`awk -F"|" "{if (\\$1 == ${STEP}) print \\$1}" ${TL} | wc -l`
-
-                    if [[ ${COUNT} -eq 0 ]]; then
-                      ROWID=${STEP}
-                      break;
-                    fi
-
-                    (( STEP += 1 ))
-                  done
-
-                  NF="${OF}.${ROWID}"
-                  
-                  #---------------------------------
-                  #- Tar & Zip the file to archive into Trash Can, then delete 
-                  #  original file.  (only removes file if archive succeeds)
-                  #-------------------------------------------------------------
-                  mv -f ${i} ${TC}/${NF}
-                  tar Pcf ${TC}/${NF}.tar ${TC}/${NF} 1>/dev/null 2>&1
-                  gzip ${TC}/${NF}.tar && rm -rf ${TC}/${NF}
-
-                  #- Log file to be moved
-                  #-------------------------
-                  echo "${ROWID}|${DATE}|${OF}|${NF}|${OD}|${JULIAN}|${FTYPE}|" >> ${TL}
+              #- Don't put a trailing slash if on last field
+              #-----------------------------------------------
+              if [[ ${FLD} -lt ${NUMFLD} ]]; then
+                OD="${OD}/"
               fi
 
+              (( FLD += 1 ))
+
+            done
+
+            #- This fixes the problem if . or .. and so on are used in
+            #  the path for the file that needs to be removed, since
+            #  these are relative paths and not absolute.
+            #---------------------------------------------------------
+            GO_BACK=0
+            if [[ ${OD} != "" ]]; then
+              cd ${OD} 2>/dev/null
+              GO_BACK=1
             fi
-                
+            OD=$PWD
+            if [[ ${GO_BACK} -gt 0 ]]; then
+              cd - 1>/dev/null
+            fi
+
+          fi
+          #---------------------------------------------------------------
+          #  finished PWD check
+          ################################################################
+
+          VerifyRM() #-- Verify removal of Special File Types
+          {
+            echo "Are you sure you want to remove this ${FTYPE}."
+            echo ${NCR1} "As of yet, ${FTYPE}s have not been tested for accurate restoration? (Y/N): ${NCR2}"
+            read ANSW
+
+            ANSW=`echo ${ANSW} | cut -c1`
+
+            if [[ ${ANSW} != "Y" && ${ANSW} != "y" ]]; then
+              echo "The ${FTYPE}, ${OF} has not been removed."
+              continue;
+            fi
+          }
+
+          FileType()
+          {
+            case "${FTYPE}" in
+              l )  FTYPE="LINK  ";;
+              - )  FTYPE="FILE  ";;
+              d )  FTYPE="DIR   ";;
+              D )  FTYPE="DOOR  "; VerifyRM;;
+              b )  FTYPE="BLOCK "; VerifyRM;;
+              c )  FTYPE="CHAR  "; VerifyRM;;
+              p )  FTYPE="FIFO  "; VerifyRM;;
+              s )  FTYPE="SOCKET"; VerifyRM;;
+            esac
+          }
+
+          #- Check to see if file exists, if not, go to next file
+          #------------------------------------------------------
+          if [ -d ${OD}/${OF} ]; then
+            FTYPE="d"
+          #elif [[ `ls ${OD}/${OF} | wc -l` -gt 0 ]]; then
+          elif [[ -f "${OD}/${OF}" ]]; then
+            FTYPE=`ls -l ${OD}/${OF} | cut -c1`
+          else
+            echo "File (${i}) does not exist."
+            continue;
+          fi
+
+          FileType                     #-- Function call
+
+          #- First, permanently remove if 'core' or 'dead.letter'
+          #------------------------------------------------------
+          if [[ ${OF} == "core" || ${OF} == "dead.letter" ]]; then
+
+            `rm ${i}`
+
+            #- Check for success
+            #---------------------
+            if [ -f ${i} ]; then
+              echo "Could not remove '${i}'."
+            else
+              echo "'${i}' was permanently removed."
+            fi
+
+            continue;
+
+          fi
+
+          #- Make sure trash can directory exists, if not create.
+          #------------------------------------------------------
+          if [ ! -d ${TC} ]; then
+            mkdir ${TC}
+          fi
+
+          #- Assign unique ROWID and New File Name to Original File
+          #  Uses the first available number (first column).
+          #----------------------------------------------------------
+          ROWID=0
+          COUNT=0
+          STEP=1
+
+          until [[ ${ROWID} -gt 0 ]]
+          do
+            COUNT=`awk -F"|" "{if (\\$1 == ${STEP}) print \\$1}" ${TL} | wc -l`
+
+            if [[ ${COUNT} -eq 0 ]]; then
+              ROWID=${STEP}
+              break;
+            fi
+
+            (( STEP += 1 ))
           done
 
-          ;;
+          NF="${OF}.${ROWID}"
+              
+          #---------------------------------
+          #- Tar & Zip the file to archive into Trash Can, then delete 
+          #  original file.  (only removes file if archive succeeds)
+          #-------------------------------------------------------------
+          mv -f ${i} ${TC}/${NF}
+          tar Pcf ${TC}/${NF}.tar ${TC}/${NF} 1>/dev/null 2>&1
+          gzip ${TC}/${NF}.tar && rm -rf ${TC}/${NF}
+
+          #- Log file to be moved
+          #-------------------------
+          echo "${ROWID}|${DATE}|${OF}|${NF}|${OD}|${JULIAN}|${FTYPE}|" >> ${TL}
+
+        done
+
+        ;;
 
   -prm )  #-- Permanently remove a file (bypass trash can)
 
           for i in $@
-            do
+          do
 
-              if [[ ${i} != "-prm" && ${i} != "${TD}" ]]; then
+            if [[ ${i} == "${TD}" ]]; then
+              continue
+            fi
 
-                rm -ri ${i}
+            rm -ri ${i}
 
-              fi
-
-            done
+          done
 
           ;;
 
@@ -378,21 +392,21 @@ case "${OPT}" in
           }
 
           for i in `sort -k 3,3 -t"|" ${TL} | awk -F"|" "\\$4 ~ /${OF}/ {print \\$1}"`
-            do
+          do
 
-              #FileType  #-- Function call
+            #FileType  #-- Function call
 
-              #- Assign STR the values of DATE, PATH/FILE NAME
-              #-------------------------------------------------
-              STR=`awk -F"|" "\\$1 == ${i} {print \\$2 \\"   \\"\\$7\\"  \\" \\$5 \"/\" \\$3}" ${TL}`
-              Length  #-- Function call
+            #- Assign STR the values of DATE, PATH/FILE NAME
+            #-------------------------------------------------
+            STR=`awk -F"|" "\\$1 == ${i} {print \\$2 \\"   \\"\\$7\\"  \\" \\$5 \"/\" \\$3}" ${TL}`
+            Length  #-- Function call
 
-              echo "${SPC}${LC}. ${STR}" >> ${TEMPLIST}
-              ROW[${LC}]=${i}        #-- Assign Row Number to ROW array
+            echo "${SPC}${LC}. ${STR}" >> ${TEMPLIST}
+            ROW[${LC}]=${i}        #-- Assign Row Number to ROW array
 
-              (( LC += 1 ))
+            (( LC += 1 ))
 
-            done
+          done
           
           Length  #-- Function call
 
@@ -401,56 +415,56 @@ case "${OPT}" in
           ANSW=0
 
           until [[ ${ANSW} -gt 0 && ${ANSW} -le ${LC} ]]
-            do
+          do
 
-              cat ${TEMPLIST} | more
-              echo "" 
+            cat ${TEMPLIST} | more
+            echo "" 
 
-              if [[ $3 == "-d" ]]; then
-                echo ${NCR1} "Select the file number to be permanently deleted: ${NCR2}"
-                read ANSW
-              else
-                echo ${NCR1} "Select the file number to be restored: ${NCR2}"
-                read ANSW
-              fi
+            if [[ $3 == "-d" ]]; then
+              echo ${NCR1} "Select the file number to be permanently deleted: ${NCR2}"
+              read ANSW
+            else
+              echo ${NCR1} "Select the file number to be restored: ${NCR2}"
+              read ANSW
+            fi
 
-              #- If a non-digit character is entered the program will fail
-              #  in the numeric comparison in the until loop.
-              #--------------------------------------------------------------
-              if [[ ${ANSW} != [[:digit:]] ]]; then
-                if [[ ${ANSW} == [[:alpha:]] || ${ANSW} == [[:alnum:]] ]]; then
-                  ANSW=0
-                fi
-              fi
-
-              #- If user chooses to EXIT.
-              #--------------------------
-              if [[ ${ANSW} -eq ${LC} ]]; then
-                if [[ $3 == "-d" ]]; then
-                  echo "No files permanently deleted."
-                else
-                  echo "No files restored."
-                fi
-                echo ""
-                rm -r ${TEMPLIST}
-                exit 0;
-              fi
-
-              if [[ ${ANSW} -lt 1 || ${ANSW} -gt ${LC} ]]; then
-
+            #- If a non-digit character is entered the program will fail
+            #  in the numeric comparison in the until loop.
+            #--------------------------------------------------------------
+            if [[ ${ANSW} != [[:digit:]] ]]; then
+              if [[ ${ANSW} == [[:alpha:]] || ${ANSW} == [[:alnum:]] ]]; then
                 ANSW=0
-                echo "Invalid Entry."
-                sleep 2
-                clear
-                banner "Trash List" 2>/dev/null
-
-                echo ""
-                echo "       Deleted         Original Path"
-                echo ""
-
               fi
+            fi
 
-            done
+            #- If user chooses to EXIT.
+            #--------------------------
+            if [[ ${ANSW} -eq ${LC} ]]; then
+              if [[ $3 == "-d" ]]; then
+                echo "No files permanently deleted."
+              else
+                echo "No files restored."
+              fi
+              echo ""
+              rm -r ${TEMPLIST}
+              exit 0;
+            fi
+
+            if [[ ${ANSW} -lt 1 || ${ANSW} -gt ${LC} ]]; then
+
+              ANSW=0
+              echo "Invalid Entry."
+              sleep 2
+              clear
+              banner "Trash List" 2>/dev/null
+
+              echo ""
+              echo "       Deleted         Original Path"
+              echo ""
+
+            fi
+
+          done
 
           echo ""
 
@@ -651,7 +665,7 @@ case "${OPT}" in
 
           echo "  Deleted     Type    File Name"
           echo "  -------     ----    ---------"
-          awk -F"|" "{print \"  \" \$2 \"  \" \$7 \"  \" \$3}" ${TL} | sort +2n -d -t\| | uniq | more
+          awk -F"|" "{print \"  \" \$2 \"  \" \$7 \"  \" \$3}" ${TL} | sort -k2,3 -d -t\| | uniq | more
           echo ""
 
           ;;
@@ -729,21 +743,21 @@ case "${OPT}" in
               (( OLD -= ${KEEPDAYS} ))
 
               for i in `awk -F"|" "\\$6 < ${OLD} {print NR}" ${TL}`
-                do
+              do
 
-                  (( DELCNT += 1 ))
+                (( DELCNT += 1 ))
 
-                  #- DELetion ARRay (holds ROWID in trash.list to be deleted)
-                  #----------------------------------------------------------
-                  DELARR[${CNT}]=`awk -F"|" "NR == ${i} {print \\$1}" ${TL}`
+                #- DELetion ARRay (holds ROWID in trash.list to be deleted)
+                #----------------------------------------------------------
+                DELARR[${CNT}]=`awk -F"|" "NR == ${i} {print \\$1}" ${TL}`
 
-                  NF=`awk -F"|" "NR == ${i} {print \\$4}" ${TL}`
-                  awk -F"|" "NR == ${i} {print \"  \" \$7 \"  \" \$3}" ${TL} >> ${F_DEL_LIST}
-                  FILEDELARR_FOUR[${DELCNT}]="${NF}.tar.gz"
+                NF=`awk -F"|" "NR == ${i} {print \\$4}" ${TL}`
+                awk -F"|" "NR == ${i} {print \"  \" \$7 \"  \" \$3}" ${TL} >> ${F_DEL_LIST}
+                FILEDELARR_FOUR[${DELCNT}]="${NF}.tar.gz"
 
-                  (( CNT += 1 ))
+                (( CNT += 1 ))
 
-                done
+              done
 
             fi
 
@@ -767,20 +781,20 @@ case "${OPT}" in
               OLD=${LASTYEAR}
 
               for i in `awk -F"|" "\\$6 <= ${OLD} && \\$6 > ${JULIAN} {print NR}" ${TL}`
-                do
+              do
 
-                  (( DELCNT += 1 ))
+                (( DELCNT += 1 ))
 
-                  #- DELetion ARRay (holds ROWID in trash.list to be deleted)
-                  #----------------------------------------------------------
-                  DELARR[${CNT}]=`awk -F"|" "NR == ${i} {print \\$1}" ${TL}`
-                  NF=`awk -F"|" "NR == ${i} {print \\$4}" ${TL}`
-                  awk -F"|" "NR == ${i} {print \"  \" \$7 \"  \" \$3}" ${TL} >> ${F_DEL_LIST}
-                  FILEDELARR_FOUR[${DELCNT}]="${NF}.tar.gz"
+                #- DELetion ARRay (holds ROWID in trash.list to be deleted)
+                #----------------------------------------------------------
+                DELARR[${CNT}]=`awk -F"|" "NR == ${i} {print \\$1}" ${TL}`
+                NF=`awk -F"|" "NR == ${i} {print \\$4}" ${TL}`
+                awk -F"|" "NR == ${i} {print \"  \" \$7 \"  \" \$3}" ${TL} >> ${F_DEL_LIST}
+                FILEDELARR_FOUR[${DELCNT}]="${NF}.tar.gz"
 
-                  (( CNT += 1 ))
+                (( CNT += 1 ))
 
-                done
+              done
 
             fi
 
@@ -833,9 +847,9 @@ case "${OPT}" in
             echo ${NCR1} "Purging old trash ..... ${NCR2}"
 
             for FILETODEL in ${FILEDELARR_FOUR[@]}
-              do
-                rm ${TC}/${FILETODEL}
-              done
+            do
+              rm ${TC}/${FILETODEL}
+            done
 
             #- Re-Initialize Counter
             #-----------------------------------------------------------
@@ -847,11 +861,11 @@ case "${OPT}" in
             #  numbers for awk.
             #-----------------------------------------------------------
             while [[ ${CNT} -le ${#DELARR[@]} ]]
-              do
-                (( CNT += 1 ))
-                sed -e /^${DELARR[${CNT}]}\|*\|*\|*\|*\|*\|/d ${TL} > ${TLR}
-                mv -f ${TLR} ${TL}
-              done
+            do
+              (( CNT += 1 ))
+              sed -e /^${DELARR[${CNT}]}\|*\|*\|*\|*\|*\|/d ${TL} > ${TLR}
+              mv -f ${TLR} ${TL}
+            done
 
             if [[ ${CNT} -eq 1 ]]; then
               GRAMMAR="file was"
