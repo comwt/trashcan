@@ -49,13 +49,6 @@ TCON2="${TD}/trash.conf.2"        #-- Trash CONfiguration temp replacement file
 TEMPLIST="${TD}/temp.list"        #-- Temporay List file (for print)
 OD=${PWD}                         #-- Original Directory
 
-SHL=`env | grep SHELL | awk -F/ '{print \$NF}'`    #-- Get SHELL
-case "${SHL}" in
-  bash)  NCR1="-n"; NCR2="";;     #-- (NCR) No Carriage Return
-   ksh)  NCR1=""; NCR2="\c";;
-     *)  NCR1=""; NCR2="";;
-esac
-
 JULIAN=`date +%j`                 #-- Current Day of Year (Julian Date)
 OJULIAN=${JULIAN}
 MO=`date +%m`                     #-- Current Month
@@ -226,7 +219,7 @@ case "${OPT}" in
           VerifyRM() #-- Verify removal of Special File Types
           {
             echo "Are you sure you want to remove this ${FTYPE}."
-            echo ${NCR1} "As of yet, ${FTYPE}s have not been tested for accurate restoration? (Y/N): ${NCR2}"
+            printf "As of yet, ${FTYPE}s have not been tested for accurate restoration? (Y/N): "
             read ANSW
 
             ANSW=`echo ${ANSW} | cut -c1`
@@ -376,7 +369,7 @@ case "${OPT}" in
           fi
 
           echo "       Deleted     Type     Original Path"
-          echo ""
+#          echo ""
 
           Length()
           {
@@ -419,10 +412,10 @@ case "${OPT}" in
             echo "" 
 
             if [[ $2 == "-d" ]]; then
-              echo ${NCR1} "Select the file number to be permanently deleted: ${NCR2}"
+              printf "Select the file number to be permanently deleted: "
               read ANSW
             else
-              echo ${NCR1} "Select the file number to be restored: ${NCR2}"
+              printf "Select the file number to be restored: "
               read ANSW
             fi
 
@@ -458,7 +451,7 @@ case "${OPT}" in
 
               echo ""
               echo "       Deleted         Original Path"
-              echo ""
+#              echo ""
 
             fi
 
@@ -491,7 +484,7 @@ case "${OPT}" in
             if [[ -f ${DIR}/${OF} || -d ${DIR}/${OF} ]]; then
 
               echo ""
-              echo ${NCR1} "File already exists.  Overwrite? (Y/N): ${NCR2}"
+              printf "File already exists.  Overwrite? (Y/N): "
               read ANSW
  
               ANSW=`echo ${ANSW} | cut -c1`
@@ -510,7 +503,7 @@ case "${OPT}" in
 
           else  #-- Marked for deletion
 
-            echo ${NCR1} "Permanently delete ${OF}? (Y/N): ${NCR2}"
+            printf "Permanently delete ${OF}? (Y/N): "
             read ANSW
 
             ANSW=`echo ${ANSW} | cut -c1`
@@ -561,7 +554,7 @@ case "${OPT}" in
 
   -empty)  #-- Delete all contents of trash can
 
-          echo ${NCR1} "\n\n\nDelete all trash? (Y/N): ${NCR2}"
+          printf "\n\n\nDelete all trash? (Y/N): "
           read ANSW
 
           if [[ ${ANSW} == "Y" || ${ANSW} == "y" ]]; then
@@ -636,7 +629,7 @@ case "${OPT}" in
             list files in trash (date deleted, file name, original path)
   "
 
-          echo ${NCR1} "Press '1' now to view the GPL License or 'enter' to continue: ${NCR2}"
+          printf "Press '1' now to view the GPL License or 'enter' to continue: "
           read TEST
           TEST="${TEST}"
           if [[ ${TEST} == "1" ]]; then
@@ -721,7 +714,7 @@ case "${OPT}" in
 
             clear
             echo ""
-            echo ${NCR1} "Determining which trash to purge ..... ${NCR2}"
+            printf "Determining which trash to purge ..... "
 
             CNT=1                  #-- Used for array 'DELARR' element position.
             DELCNT=0               #-- Used to increment possition for files
@@ -819,7 +812,7 @@ case "${OPT}" in
               echo "The following file(s) will be deleted:"
               cat ${F_DEL_LIST} | more
               echo ""
-              echo ${NCR1} "Is this OK? (Y/N): ${NCR2}"
+              printf "Is this OK? (Y/N): "
               read ANSW
 
               if [[ ${ANSW} != "Y" && ${ANSW} != "y" ]]; then
@@ -842,7 +835,7 @@ case "${OPT}" in
             #- Remove the files now
             #-----------------------------------------------------------
             echo ""
-            echo ${NCR1} "Purging old trash ..... ${NCR2}"
+            printf "Purging old trash ..... "
 
             for FILETODEL in ${FILEDELARR_FOUR[@]}
             do
@@ -890,13 +883,13 @@ case "${OPT}" in
           echo ""
           echo "Current Keep Days: ${KEEPDAYS}"
           echo ""
-          echo ${NCR1} "Do you wish to change this? (Y/N): ${NCR2}"
+          printf "Do you wish to change this? (Y/N): "
           read ANSW
           echo ""
 
           if [[ ${ANSW} == "Y" || ${ANSW} == "y" ]]; then
 
-            echo ${NCR1} "Enter New Keep Days: ${NCR2}"
+            printf "Enter New Keep Days: "
             read NEWKEEP
 
             if [[ ${NEWKEEP} -ne ${KEEPDAYS} ]]; then
@@ -936,13 +929,13 @@ case "${OPT}" in
           echo ""
           echo "Current Maximum Kilobytes: ${MAXTRASHCAP}"
           echo ""
-          echo ${NCR1} "Do you wish to change this? (Y/N): ${NCR2}"
+          printf "Do you wish to change this? (Y/N): "
           read ANSW
           echo ""
 
           if [[ ${ANSW} == "Y" || ${ANSW} == "y" ]]; then
 
-            echo ${NCR1} "Enter New MAX Trash Can Size (in Kilobytes): ${NCR2}"
+            printf "Enter New MAX Trash Can Size (in Kilobytes): "
             read NEWMAX
 
             if [[ ${NEWMAX} -ne ${MAXTRASHCAP} ]]; then
