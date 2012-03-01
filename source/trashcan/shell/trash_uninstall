@@ -1,6 +1,7 @@
+#set -x
 ################################################################################
 #
-# Copyright (C) 2001-2003
+# Copyright (C) 2001-2012
 # by Justin Francis
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,10 +35,6 @@ else
   export TRASHCAN_DEBUG_FLAG=0
 fi
 
-#- Dot in file that sets carriage return opions for echo command
-#----------------------------------------------------------------
-. ./modules/SetNCR.sh
-
 clear screen
 echo "
 
@@ -64,7 +61,7 @@ echo "
 
 This will un-install the Trash Can"
 
-echo $TC_NCR1 "Do you wish to proceed? (Y/N): $TC_NCR2"
+printf "Do you wish to proceed? (Y/N): "
 read ANSW
 
 ANSW=`echo ${ANSW} | cut -c1`
@@ -125,7 +122,7 @@ TDIR_Remove() {
     echo "DEBUG: TDIR_Remove()"
   fi
 
-  echo $TC_NCR1 "  Removing the directory [ ${TDIR} ] ..... $TC_NCR2"
+  printf "  Removing the directory [ ${TDIR} ] ..... "
   rm -fr ${TDIR} && echo "DONE"
 
 }
@@ -142,7 +139,7 @@ BIN_Remove() {
     echo "DEBUG: BIN_Remove()"
   fi
 
-  echo $TC_NCR1 "  Removing the executable ..... $TC_NCR2"
+  printf "  Removing the executable ..... "
   rm -fr ${BIN}/trash.sh && echo "DONE"
 
 }
@@ -159,7 +156,7 @@ RestoreProfile() {
     echo "DEBUG: RestoreProfile()"
   fi
 
-  echo $TC_NCR1 "  Removing aliases from ${PFILE} ..... $TC_NCR2"
+  printf "  Removing aliases from ${PFILE} ..... "
 
   #- Delete Trash Can aliases from profile
   #----------------------------------------
@@ -184,7 +181,7 @@ RemoveFromUserList() {
     echo "DEBUG: RemoveFromUserList()"
   fi
 
-  echo $TC_NCR1 "  Deleting user '${USER_TRASH_HOME}' from users.list ..... $TC_NCR2"
+  printf "  Deleting user '${USER_TRASH_HOME}' from users.list ..... "
 
   #- Delete user from root's user.list file
   #-----------------------------------------
@@ -265,7 +262,7 @@ Current Trash Can Users:
       Length     #-- Function Call
       echo "${SPC}${STEP}) Exit (Not Shown)"
       echo ""
-      echo $TC_NCR1 "Uninstall Trash Can for (1 - ${STEP}): $TC_NCR2"
+      printf "Uninstall Trash Can for (1 - ${STEP}): "
       read ANSW
       echo ""
 
@@ -325,11 +322,11 @@ Current Trash Can Users:
 
       fi
 
-      echo $TC_NCR1 "  You chose to uninstall trash for:
+      printf "  You chose to uninstall trash for:
 
     ${TRASH_USERS_ARR[${ANSW}]}
 
-  is this correct? (Y/N): $TC_NCR2"
+  is this correct? (Y/N): "
       read TEST
 
       TEST=`echo ${TEST} | cut -c1`
@@ -439,13 +436,13 @@ RootUninstall() {
     ULFILE2="${TDIR}/users.list.2"
 
     export MULTIPLE_USERS=1
-    echo $TC_NCR1 "Choose Users:
+    printf "Choose Users:
 
   1) Remove trash for single user
   2) Remove trash for selected users
   3) Remove trash for all users
 
-What would you like to do? (1 - 3): $TC_NCR2"
+What would you like to do? (1 - 3): "
     read ANSW
 
   fi

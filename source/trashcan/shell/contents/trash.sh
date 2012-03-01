@@ -1,7 +1,7 @@
 #set -x
 ################################################################################
 #
-# Copyright (C) 2001-2003
+# Copyright (C) 2001-2012
 # by Justin Francis
 #
 # This program is free software; you can redistribute it and/or modify
@@ -32,8 +32,6 @@
 #            3) Daily flushes out files in trash.list older 
 #               than user specified number of days old.
 ################################################################################
-#- Version:  Trash Can 3.3
-#-------------------------------------------------------------------------------
 
 #- Trash Directory
 #-------------------
@@ -354,7 +352,7 @@ case "${OPT}" in
 
           clear
 
-          > ${TEMPLIST}              #-- Clear if present
+          echo > ${TEMPLIST}              #-- Clear if present
 
           #- If no file name is passed in then assign "**" to list all files
           #-------------------------------------------------------------------
@@ -590,10 +588,10 @@ case "${OPT}" in
               fi
               QTY2=`ls -A ${TC} | wc -l`
               if [[ ${QTY2} -eq 0 ]]; then
-                > ${TL}
+                echo > ${TL}
                 echo "All trash has been permanently deleted."
               elif [[ ${QTY1} -ne ${QTY2} ]]; then
-                > ${TL}
+                echo > ${TL}
                 echo "\n`expr ${QTY1} - ${QTY2}` out of `expr ${QTY1}` files were deleted."
                 echo "\nBelow are the files that were left:"
                 ls -A ${TC}
@@ -732,7 +730,7 @@ case "${OPT}" in
             #- Create or Clear the file to contain file names to be deleted
             #-----------------------------------------------------------------
             F_DEL_LIST="${TD}/del.list"  #-- (File) Delete List
-            > ${F_DEL_LIST}
+            echo > ${F_DEL_LIST}
 
             #-----------------------------------------------------------------
             #- First, check to see if old file date falls within current year

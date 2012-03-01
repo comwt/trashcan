@@ -6,7 +6,7 @@
 #
 ################################################################################
 #
-# Copyright (C) 2001-2003
+# Copyright (C) 2001-2012
 # by Justin Francis
 #
 # This program is free software; you can redistribute it and/or modify

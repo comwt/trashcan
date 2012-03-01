@@ -1,6 +1,7 @@
+#set -x
 ################################################################################
 #
-# Copyright (C) 2001-2003
+# Copyright (C) 2001-2012
 # by Justin Francis
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,6 +21,24 @@
 ################################################################################
 
 clear screen
+
+M_PERL_TF=0
+MX_TRASH='trash.sh'
+
+M_START_DIR=`pwd|awk -F\/ '{print $NF}'`
+if [[ ${M_START_DIR} == "perl" ]]; then
+ echo "Perl version not yet implemented"
+ exit 101
+  M_PERL_TF=1
+  MX_TRASH='trash.pl'
+  echo "Installing Perl version of TrashCan"
+  cd ../shell
+elif [[ ${M_START_DIR} == "shell" ]]; then
+  echo "Installing shell version of TrashCan"
+else
+  echo "Please change directory to trashcan-<version>."
+  exit 101
+fi
 
 ./modules/TestHelp.sh "$*"
 if [[ $? -gt 0 ]]; then
@@ -47,8 +66,10 @@ if [ ! -f "./trash_install.2" ]; then
         sed -e '/^[^.awk]*if / s/==/=/g' trash_uninstall > ${M_OF}
         mv ${M_OF} trash_uninstall
         chmod 700 trash_uninstall
-        sed -e '/^[^.awk]*if / s/==/=/g' contents/trash.sh > ${M_OF}
-        mv ${M_OF} contents/trash.sh
+        if [[ ${M_PERL_TF} -eq 0 ]]; then
+          sed -e '/^[^.awk]*if / s/==/=/g' contents/trash.sh > ${M_OF}
+          mv ${M_OF} contents/trash.sh
+        fi
         ./trash_install.2
         rm ./trash_install.2
         exit 0;
@@ -58,24 +79,20 @@ fi
 
 clear screen
 
-#- Dot in file that sets carriage return opions for echo command
-#----------------------------------------------------------------
-. ./modules/SetNCR.sh
-
 #- Trash Can Version
 #-------------------
 M_TVRSN=`cat ../VERSION`
 
 Greeting() {
 
-  echo $TC_NCR1 "
+  printf "
 
 
     +----------------------------------------------------------------------+
     |                                                                      |
     |                                                                      |
     |                                                                      |
-    |  Trash Can version ${M_TVRSN}, Copyright (C) 2001-2003 Justin Francis       |
+    |  Trash Can version ${M_TVRSN}, Copyright (C) 2001-2012 Justin Francis       |
     |                                                                      |
     |  Trash Can comes with ABSOLUTELY NO WARRANTY                         |
     |                                                                      |
@@ -84,7 +101,7 @@ Greeting() {
     |                                                                      |
     |                                                                      |
     |                                                                      |
-    +----------------------------------------------------------------------+ $TC_NCR2"
+    +----------------------------------------------------------------------+\n"
       read M_ANSW
 
   if [[ ${M_ANSW} == [[:digit:]] ]]; then
@@ -96,7 +113,7 @@ Greeting() {
 
   clear screen
 
-  echo "
+  printf "
 
           ###
            #     #    #   ####    #####    ##    #       #
@@ -118,9 +135,9 @@ Greeting() {
 
 ---------------------------------------------------------------------------
 
-Hello.  This will install Trash Can version ${M_TVRSN} in your home directory."
+Hello.  This will install Trash Can version ${M_TVRSN} in your home directory.\n\n"
 
-  echo $TC_NCR1 "Do you wish to proceed? (y/n) [Y]: $TC_NCR2"
+  printf "Do you wish to proceed? (y/n) [Y]: "
   read M_ANSW
 
   if [[ ${M_ANSW} == "" ]]; then
@@ -142,7 +159,7 @@ Restore() {
 
   #- Restore file system back to original condition
   #--------------------------------------------------
-  echo $TC_NCR1 "Attempting to restore your filesystem ..... $TC_NCR2"
+  printf "Attempting to restore your filesystem ..... "
 
   if [[ ${M_UPD_FLAG} -eq 1 || ${M_CONVERT_FLAG} -eq 1 ]]; then
     if [ -f "${HDIR}/backup/trash.tar" ]; then
@@ -167,10 +184,10 @@ Restore() {
     rm -fr ${M_TDIR}
   fi
 
-  #- If backup of original trash.sh exists - move back.
-  #----------------------------------------------------------
-  if [ -f "${HDIR}/backup/trash.sh" ]; then
-    mv ${HDIR}/backup/trash.sh ${M_BIN}/trash.sh
+  #- If backup of original trash.pl or trash.sh exists - move back
+  #----------------------------------------------------------------
+  if [ -f "${HDIR}/backup/${MX_TRASH}" ]; then
+    mv ${HDIR}/backup/${MX_TRASH} ${M_BIN}/${MX_TRASH}
   fi
 
   #- Remove the profile if it was created by trash_install.sh
@@ -193,13 +210,17 @@ VerChk() {
   if [[ $TRASHCAN_DEBUG_FLAG -eq 1 ]]; then
     echo "DEBUG: VerChk()"
   fi
-  M_VERNUM=`grep "#- Version:  Trash Can" ${M_BIN}/trash.sh`
+
+  if [[ -f "${M_BIN}/VERSION" ]]; then
+    M_VERNUM=`cat ${M_BIN}/VERSION`
+  else
+    M_VERNUM=`grep "#- Version:  Trash Can" ${M_BIN}/${MX_TRASH} 2>/dev/null | awk '{print $5}'`
+  fi
 
   if [[ ${M_VERNUM} != "" ]]; then
-    M_VERNUM=`echo ${M_VERNUM} | awk '{print $5}'`
-    echo $TC_NCR1 "TrashCan Version ${M_VERNUM} already exists in ${M_BIN}.  Replace? (y/n): $TC_NCR2"
+    printf "TrashCan Version ${M_VERNUM} already exists in ${M_BIN}.  Replace? (y/n): "
   else
-    echo $TC_NCR1 "An unknown version of ${M_BIN}/trash.sh already exists.  Replace? (y/n): $TC_NCR2"
+    printf "An unknown version of ${M_BIN}/${MX_TRASH} already exists.  Replace? (y/n): "
   fi
 
   read M_ANSW
@@ -209,10 +230,10 @@ VerChk() {
 
     #- Create backup for restoration purposes
     #-------------------------------------------
-    mv -f ${M_BIN}/trash.sh ${HDIR}/backup/trash.sh
+    mv -f ${M_BIN}/${MX_TRASH} ${HDIR}/backup/${MX_TRASH}
 
-    cp ./trash.sh ${M_BIN}/trash.sh
-    chmod 555 ${M_BIN}/trash.sh
+    cp ./${MX_TRASH} ${M_BIN}/${MX_TRASH}
+    chmod 555 ${M_BIN}/${MX_TRASH}
 
   else
 
@@ -243,7 +264,7 @@ SetConfDef() {
   fi
 
   if [[ ${M_KEEPDAYS} == "" ]]; then
-    echo $TC_NCR1 "How many days do you want to keep old trash? $TC_NCR2"
+    printf "How many days do you want to keep old trash? "
     read M_KEEPDAYS
     echo ""
     echo "Trash older than ${M_KEEPDAYS} days old will be permanently discarded."
@@ -254,7 +275,7 @@ SetConfDef() {
     echo "Enter the maximum size (in kilobytes) that you want to allow"
     echo "for the Trash Can below.  (e.g. If you want up to 5 Megs storage,"
     echo "enter '5000')"
-    echo $TC_NCR1 "                 Maximum Capacity: $TC_NCR2"
+    printf "                 Maximum Capacity: "
     read M_MAXTRASHCAP
     echo ""
     echo "The maximum storage capacity of Trash Can will be set to ${M_MAXTRASHCAP} kilobytes."
@@ -267,10 +288,10 @@ SetConfDef() {
     echo "If you wish to change 'keep days' or 'maximum trash can capacity'"
     echo "later, you will have the chance to do so."
     echo ""
-    echo $TC_NCR1 "Press <enter> to continue$TC_NCR2"; read M_TEST
+    printf "Press <enter> to continue"; read M_TEST
   fi
 
-  echo $TC_NCR1 "  Setting trash.conf's DEFAULTS ..... $TC_NCR2"
+  printf "  Setting trash.conf's DEFAULTS ..... "
 
   ###########################################################
   #  GATHER Extra Setting
@@ -353,12 +374,12 @@ CheckDeps() {
   M_FLAG=0                          #-- Missing dependancy FATAL flag
   M_NF=0                            #-- Not found
 
-  echo $TC_NCR1 "
+  printf "
 Please be sure to allow the installation to exit naturally, as it
 will restore your file system back to its original condition if
 the installation is unsuccessful for some reason.
 
-Press <enter> to continue$TC_NCR2"
+Press <enter> to continue"
   read M_TEST
 
   echo "
@@ -446,7 +467,7 @@ MAIL_FOUND_FLAG=1 #-- Default this flag (existance of 'mail') to TRUE
       echo ""
       PrintDeps  #-- Function Call
       echo ""
-      echo $TC_NCR1 "Press <enter> to continue...$TC_NCR2"
+      printf "Press <enter> to continue..."
       read M_TEST
       echo ""
 
@@ -460,7 +481,7 @@ MAIL_FOUND_FLAG=1 #-- Default this flag (existance of 'mail') to TRUE
 
   fi
 
-} #-- End Function ChkDeps()
+} #-- End Function CheckDeps()
 
 BinDirChoice() {
 
@@ -500,7 +521,7 @@ BinDirChoice() {
       echo "  1) Home Directory (DEFAULT - Personal Use)"
       echo "  2) ${M_BIN} (Multiple users - Root Privileges Required)"
       echo ""
-      echo $TC_NCR1 "Which would you prefer? $TC_NCR2"
+      printf "Which would you prefer? "
       read M_ANSW3
 
       if [[ ${M_ANSW3} != [[:digit:]] ]]; then
@@ -541,7 +562,7 @@ AddUsers() {
       else
         echo "The directory '${M_HBASE}' does not exist or it is empty."
       fi
-      echo $TC_NCR1 "Please enter the base directory of your users: $TC_NCR2"
+      printf "Please enter the base directory of your users: "
       read M_HBASE
 
       if [[ `ls -d ${M_HBASE} | wc -l` -eq 1 && `ls ${M_HBASE} | wc -l` -ne 0 ]]; then
@@ -593,8 +614,8 @@ AddUsers() {
               else
                 echo "The user '${M_HBASE}/${i}' does not exist."
                 echo ""
-                echo $TC_NCR1 "Please enter another user name to replace this one or hit ENTER to"
-                echo "delete it from the list: $TC_NCR2"
+                printf "Please enter another user name to replace this one or hit ENTER to"
+                echo "delete it from the list: "
                 read i
 
                 if [[ ${i} == "" ]]; then
@@ -619,7 +640,7 @@ AddUsers() {
             echo "   1.  Continue with Installation"
             echo "   2.  Add more users"
             echo ""
-            echo $TC_NCR1 "Choose one of the above options: $TC_NCR2"
+            printf "Choose one of the above options: "
 
             read M_ANSW3
 
@@ -686,7 +707,7 @@ You have three options:
   2) Create a second trash directory.
   3) Abort installation until research is done.
 "
-          echo $TC_NCR1 "What would you like to do? (1,2 or 3): $TC_NCR2"
+          printf "What would you like to do? (1,2 or 3): "
           read M_ANSW
   
           if [[ ${M_ANSW} != [[:digit:]] ]]; then
@@ -714,13 +735,13 @@ You have three options:
     1 ) #-- Create / Overwrite ~/.trash
 
         if [[ ${M_PREXST} -eq 0 ]]; then
-          echo $TC_NCR1 "  Creating ${M_TRASH_USER}/.trash ..... $TC_NCR2"
+          printf "  Creating ${M_TRASH_USER}/.trash ..... "
         else
           if [[ ! -d ${M_TRASH_USER}/.trash/can && ! -f "${M_TRASH_USER}/.trash/trash.list" ]]; then
-            echo $TC_NCR1 "  Converting ${M_TRASH_USER}/.trash ..... $TC_NCR2"
+            printf "  Converting ${M_TRASH_USER}/.trash ..... "
             M_CONVERT_FLAG=1
           else
-            echo $TC_NCR1 "  Updating ${M_TRASH_USER}/.trash ..... $TC_NCR2"
+            printf "  Updating ${M_TRASH_USER}/.trash ..... "
             M_UPD_FLAG=1
           fi
           cd ${M_TRASH_USER} && tar Pcf trash.tar .trash && mv trash.tar ${HDIR}/backup && cd - 1>/dev/null
@@ -766,7 +787,7 @@ You have three options:
 
             else
 
-              echo $TC_NCR1 "Creating ${M_TRASH_USER}/.trash${M_NUM} ..... $TC_NCR2"
+              printf "Creating ${M_TRASH_USER}/.trash${M_NUM} ..... "
               mkdir ${M_TRASH_USER}/.trash${M_NUM} && mkdir ${M_TRASH_USER}/.trash${M_NUM}/can
               M_ACCEPT=1
 
@@ -793,9 +814,9 @@ You have three options:
   chmod 740 ${M_TDIR}; chmod 740 ${M_TDIR}/can
   chmod +t ${M_TDIR} ${M_TDIR}/can
 
-  #- Set file permissions and copy all trash.sh associated files
-  #  to new Trash directory.
-  #----------------------------------------------------------------
+  #- Set file permissions and copy all trash.pl or trash.sh associated
+  #  files to new Trash directory.
+  #--------------------------------------------------------------------
   if [[ ${M_UPD_FLAG} -eq 0 ]]; then
     cp ./trash.list ${M_TDIR}; chmod 640 ${M_TDIR}/trash.list
   fi
@@ -805,8 +826,12 @@ You have three options:
   if [ -f "${M_TDIR}/License" ]; then
     rm -fr ${M_TDIR}/License
   fi
-
   cp ../../License ${M_TDIR}; chmod 440 ${M_TDIR}/License
+
+  if [ -f "${M_TDIR}/VERSION" ]; then
+    rm -fr ${M_TDIR}/VERSION
+  fi
+  cp ../../VERSION ${M_TDIR}; chmod 440 ${M_TDIR}/VERSION
 
   if [[ ${M_USE_DEFAULTS} == 0 || ${M_DEF_PROFILE} == "" ]]; then
     #- Look for .profile or similar in ~
@@ -855,7 +880,7 @@ You have three options:
           done
 
         echo "  -------------------------------------------------"
-        echo $TC_NCR1 "  Enter Choice: $TC_NCR2"
+        printf "  Enter Choice: "
         read M_CHOICE
 
         if [[ ${M_CHOICE} != [[:digit:]] ]]; then
@@ -872,9 +897,9 @@ You have three options:
             4     ) M_ACCEPT=0; while [[ ${M_ACCEPT} -eq 0 ]]
                       do
                         echo ""
-                        echo $TC_NCR1 "Please type your profile's name (include the dot): $TC_NCR2"; read M_PFILE
+                        printf "Please type your profile's name (include the dot): "; read M_PFILE
                         echo ""
-                        echo $TC_NCR1 "You have chosen '${M_PFILE}', is this correct? (y/n): $TC_NCR2"; read M_TEST
+                        printf "You have chosen '${M_PFILE}', is this correct? (y/n): "; read M_TEST
 
                         M_TEST=`echo ${M_TEST} | cut -c1`
                         if [[ ${M_TEST} == "Y" || ${M_TEST} == "y" ]]; then
@@ -930,7 +955,7 @@ You have three options:
 
         echo "    ${M_CNT}) Need to research - EXIT"
         echo ""
-        echo $TC_NCR1 "Enter the number of the file you wish to update: $TC_NCR2"
+        printf "Enter the number of the file you wish to update: "
         read M_ANSW
 
         if [[ ${M_ANSW} != [[:digit:]] ]]; then
@@ -962,7 +987,7 @@ Finalize() {
 
   #- Modify the profile file
   #----------------------------------------------------------------------
-  echo $TC_NCR1 "  Modifying ${M_PFILE} ..... $TC_NCR2"
+  printf "  Modifying ${M_PFILE} ..... "
 
   #- Temporary file for sed output
   #--------------------------------
@@ -983,19 +1008,32 @@ Finalize() {
 
   #- Create new trash can entries
   #------------------------------------
+  M_TRASH_ENV=""
+  if [[ ${M_PERL_TF} -eq 1 ]]; then
+    if [ -f "/usr/bin/env" ]; then
+      M_TRASH_ENV='/usr/bin/env perl'
+    elif [ -f "/usr/bin/perl" ]; then
+      M_TRASH_ENV='/usr/bin/perl'
+    else
+      M_TRASH_ENV='perl'
+    fi
+  else
+    M_TRASH_ENV=${SHELL}
+  fi
+
   echo "#- Trash Can
 TRASHDIR=${M_TDIR}   #-- User's TRASH DIRectory
 TBINDIR=${M_BIN}     #-- Trash BINary DIRectory
-alias delete=\"\${TBINDIR}/trash.sh -rest \${TRASHDIR} -d \"
-alias empty=\"\${TBINDIR}/trash.sh -empty \${TRASHDIR} \"
-alias prm=\"\${TBINDIR}/trash.sh -prm \${TRASHDIR} \"
-alias purge=\"\${TBINDIR}/trash.sh -purge \${TRASHDIR} \"
-alias trestore=\"\${TBINDIR}/trash.sh -rest \${TRASHDIR} \"
-alias rm=\"\${TBINDIR}/trash.sh -rm \${TRASHDIR} \"  #-- Same as 'throw'
-alias throw=\"\${TBINDIR}/trash.sh -rm \${TRASHDIR} \"  #-- Same as 'rm'
-alias tkeep=\"\${TBINDIR}/trash.sh -keep \${TRASHDIR} \"  #-- Configure keep days
-alias tmax=\"\${TBINDIR}/trash.sh -tmax \${TRASHDIR} \"  #-- Configure capacity
-alias trash=\"\${TBINDIR}/trash.sh -list \${TRASHDIR} \"  #-- Trash Specs/Contents
+alias delete=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -rest \${TRASHDIR} -d \"
+alias empty=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -empty \${TRASHDIR} \"
+alias prm=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -prm \${TRASHDIR} \"
+alias purge=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -purge \${TRASHDIR} \"
+alias trestore=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -rest \${TRASHDIR} \"
+alias rm=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -rm \${TRASHDIR} \"  #-- Same as 'throw'
+alias throw=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -rm \${TRASHDIR} \"  #-- Same as 'rm'
+alias tkeep=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -keep \${TRASHDIR} \"  #-- Configure keep days
+alias tmax=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -tmax \${TRASHDIR} \"  #-- Configure capacity
+alias trash=\"${M_TRASH_ENV} \${TBINDIR}/${MX_TRASH} -list \${TRASHDIR} \"  #-- Trash Specs/Contents
 purge #-- Daily Old Trash Purge" >> ${M_PFILE}
   echo "DONE"
 
@@ -1007,14 +1045,14 @@ ChkExistTrash() {
     echo "DEBUG: ChkExistTrash()"
   fi
 
-  if [ -f "${M_BIN}/trash.sh" ]; then
+  if [ -f "${M_BIN}/${MX_TRASH}" ]; then
 
     VerChk  #-- Function Call (M_VERNUM is set; transfer is verified)
 
   else
 
-    cp ${HDIR}/trash.sh ${M_BIN}/trash.sh
-    chmod 555 ${M_BIN}/trash.sh
+    cp ${HDIR}/${MX_TRASH} ${M_BIN}/${MX_TRASH}
+    chmod 555 ${M_BIN}/${MX_TRASH}
 
   fi
 
@@ -1048,7 +1086,7 @@ options:
   3) Abort installation until research is done.
   4) Have this installation script prompt for your input on each occurrence.
 "
-  echo $TC_NCR1 "What would you like to do? (1 - 4): $TC_NCR2"
+  printf "What would you like to do? (1 - 4): "
   read M_TRASH_EXISTS_ANSW
   
   case "${M_TRASH_EXISTS_ANSW}" in
@@ -1071,12 +1109,12 @@ options:
      to use for all users.
   3) Select a profile for each user independantly as they process.
 "
-  echo $TC_NCR1 "Enter your selection (1, 2 or 3): $TC_NCR2"
+  printf "Enter your selection (1, 2 or 3): "
   read M_ANSW
 
   case "${M_ANSW}" in
 
-    1) echo ""; echo $TC_NCR1 "Enter the default profile name: $TC_NCR2"
+    1) echo ""; printf "Enter the default profile name: "
        read M_DEF_PROFILE;;
 
     2) M_VPROF="valid_profiles.list"
@@ -1112,11 +1150,11 @@ Unique profiles found among the users you've chosen:
          (( M_STEP += 1 ))
          echo "  ${M_STEP})  Enter a different one..."
          echo ""
-         echo $TC_NCR1 "Which would you like to use (1 - ${M_STEP}): $TC_NCR2"
+         printf "Which would you like to use (1 - ${M_STEP}): "
          read M_ANSW
 
          if [[ ${M_ANSW} == ${M_STEP} ]]; then
-           echo ""; echo $TC_NCR1 "Enter the default profile name: $TC_NCR2"
+           echo ""; printf "Enter the default profile name: "
            read M_DEF_PROFILE
          else
            M_DEF_PROFILE=`awk "{if (NR == ${M_ANSW}) print \\$0}" ${M_VPROF}`
@@ -1133,16 +1171,16 @@ Unique profiles found among the users you've chosen:
   M_DEF_KEEP_DAYS=""
   echo "
 "
-  echo $TC_NCR1 "Days to keep trash:
+  printf "Days to keep trash:
 
   1) Use a default number for all users.
   2) Enter a value for each user independently.
 
-Which would you like to do? (1 or 2): $TC_NCR2"
+Which would you like to do? (1 or 2): "
   read M_ANSW
 
   if [[ ${M_ANSW} -eq "1" ]]; then
-    echo $TC_NCR1 "How many days would you like users to keep old trash? $TC_NCR2"
+    printf "How many days would you like users to keep old trash? "
     read M_DEF_KEEP_DAYS
     echo ""
     echo "Trash older than ${M_DEF_KEEP_DAYS} days old will be permanently"
@@ -1155,12 +1193,12 @@ Which would you like to do? (1 or 2): $TC_NCR2"
   M_DEF_CAPACITY=""
   echo "
 "
-  echo $TC_NCR1 "Maximum trash can capacity:
+  printf "Maximum trash can capacity:
 
   1) Use a default limit for all users.
   2) Enter a limit for each user independently.
 
-Which would you like to do? (1 or 2): $TC_NCR2"
+Which would you like to do? (1 or 2): "
   read M_ANSW
 
   if [[ ${M_ANSW} -eq "1" ]]; then
@@ -1168,7 +1206,7 @@ Which would you like to do? (1 or 2): $TC_NCR2"
     echo "Enter the maximum size (in kilobytes) that you want to allow"
     echo "for the Trash Can below.  (e.g. If you want up to 5 Megs storage,"
     echo "enter '5000')"
-    echo $TC_NCR1 "                 Maximum Capacity: $TC_NCR2"
+    printf "                 Maximum Capacity: "
     read M_DEF_CAPACITY
     echo ""
     echo "The maximum storage capacity of Trash Can will be set to"
@@ -1178,7 +1216,7 @@ Which would you like to do? (1 or 2): $TC_NCR2"
   if [[ ${M_DEF_KEEP_DAYS} != "" || ${M_DEF_CAPACITY} != "" ]]; then
     echo "If you wish to change either of these later, you will have the chance to do so."
     echo ""
-    echo $TC_NCR1 "Press <enter> to continue$TC_NCR2"; read M_TEST
+    printf "Press <enter> to continue"; read M_TEST
     echo ""
   fi
 
@@ -1200,7 +1238,7 @@ RootUser() {
     . ${HDIR}/../modules/FindConfFile.sh  #--Set "TRASHCAN_CONF_FILE" and "TDIR"
 
     if [[ ${M_USER_ADD_FLAG} -eq 0 ]]; then
-      echo $TC_NCR1 "Would you like other users to have a trash can? (y/n): $TC_NCR2"
+      printf "Would you like other users to have a trash can? (y/n): "
       read M_ANSW
       M_ANSW=`echo ${M_ANSW} | cut -c1`
     else
@@ -1254,32 +1292,32 @@ M_USE_DEFAULTS=0
 M_USER_ADD_FLAG=0
 
 F_USERS_TEMP="${HDIR}/users.conf" #-- (File) Added Users
-> ${F_USERS_TEMP}                   #-- Clear file
+echo "F_USERS_TEMP = ${F_USERS_TEMP}"
+echo > ${F_USERS_TEMP}                   #-- Clear file
 
 BinDirChoice  #-- Function Call
 
 if [[ ${M_ROOT_FLAG} -eq 1 ]]; then #-- See if root user is needed, if 1 then
 
-  M_VERNUM=`grep "#- Version:  Trash Can" ${M_BIN}/trash.sh 2>/dev/null`
+  if [[ -f "${M_BIN}/VERSION" ]]; then
+    M_VERNUM=`cat ${M_BIN}/VERSION`
+  else
+    M_VERNUM=`grep "#- Version:  Trash Can" ${M_BIN}/${MX_TRASH} 2>/dev/null | awk '{print $5}'`
+  fi
 
-  if [[ ${M_VERNUM} != "" ]]; then
-    M_VERNUM=`echo ${M_VERNUM} | awk '{print $5}'`
-
-    if [[ ${M_VERNUM} == ${M_TVRSN} ]]; then
-      clear
-      echo $TC_NCR1 "
+  if [[ ${M_VERNUM} == ${M_TVRSN} ]]; then
+    clear
+    printf "
 Trashcan Version ${M_VERNUM} - UPDATE:
 
   1) Add More Users
   2) Full Re-Install
 
-What would like to do? (1 or 2): $TC_NCR2"
-      read M_ANSW
+What would like to do? (1 or 2): "
+    read M_ANSW
 
-      if [[ ${M_ANSW} == "1" ]]; then
-        M_USER_ADD_FLAG=1
-      fi
-
+    if [[ ${M_ANSW} == "1" ]]; then
+      M_USER_ADD_FLAG=1
     fi
 
   fi
@@ -1318,7 +1356,7 @@ for M_TRASH_USER in `cat ${F_USERS_TEMP}`
     #--------------------------------------------------------
     if [[ ${M_USE_DEFAULTS} -eq 1 ]]; then
       CURR_TRASH_USER=`echo ${M_TRASH_USER} | awk -F"/" "{print \\$NF}"`
-      echo $TC_NCR1 "  Changing recursive ownership of trash directory to ${CURR_TRASH_USER} ..... $TC_NCR2"
+      printf "  Changing recursive ownership of trash directory to ${CURR_TRASH_USER} ..... "
       chown -R ${CURR_TRASH_USER} ${M_TDIR}
       echo "DONE"
     fi
@@ -1359,20 +1397,20 @@ fi
     echo "DEBUG: finished users.list append"
   fi
 
-#- Only create/replace trash.sh if this is a fresh install/re-install
-#---------------------------------------------------------------------
+#- Only create/replace trash.pl or trash.sh if this is a fresh install/re-install
+#---------------------------------------------------------------------------------
 if [[ ${M_USER_ADD_FLAG} -eq 0 ]]; then
   ChkExistTrash  #-- Function Call (If exists, replace, else, create)
 fi
 
 #- Verify that the trash script installed correctly
 #----------------------------------------------------------------------------
-if [ ! -f "${M_BIN}/trash.sh" ]; then
+if [ ! -f "${M_BIN}/${MX_TRASH}" ]; then
 
   echo "An error occurred.  Please research the problem and try again."
   echo "After doing so, if you still can't get a successful install, and it"
   echo "is DEFINITELY not a system problem on your end, then feel free to"
-  echo "email me at: trash_can_bugs@yoursitemaster.com with any information"
+  echo "email me at: gnu-trashcan@comwt.com with any information"
   echo "you can provide that may help me figure out what went wrong."
   echo ""
 
@@ -1396,7 +1434,7 @@ Just re-invoke ${M_PFILE} with the command:
 
     . ${M_PFILE}
 
-Then type the command 'trash' to see what the programs
+Then type the command 'trash' to see what the program's
 capabilities are and a list of commands.
 
 Enjoy the benefits of file recovery.
@@ -1418,7 +1456,7 @@ if [[ ${MAIL_FOUND_FLAG} -eq 1 ]]; then
   #- Send mail to all affected users
   #----------------------------------
   if [[ ${M_USER_ADD_FLAG} -eq 1 || ${M_USE_DEFAULTS} -eq 1 ]]; then
-    echo $TC_NCR1 "Sending a mail message to new trashcan user(s) ..... $TC_NCR2"
+    printf "Sending a mail message to new trashcan user(s) ..... "
 
     for i in `cat users.conf | awk -F"/" "{print \\$NF}"`
       do

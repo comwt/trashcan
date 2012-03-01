@@ -1,7 +1,7 @@
 
 --------------------------------------------------------------------------------
-Trash Can 3.0 (production/stable)
-Copyright (C) 2001-2003 GPL (GNU General Public License)
+Trash Can (production/stable)
+Copyright (C) 2001-2012 GPL (GNU General Public License)
 by Justin Francis
 
 
@@ -12,19 +12,19 @@ INSTALLATION HOW-TO:
 
     1) cd to the directory for the type of trashcan you want to install/run:
 
-        shell = korn, bourne again, or zshell (ksh/bash/zsh)
+        shell = ksh, bash, or zsh
         perl  = perl version
 
     2) run trash_install
 
-       ./trash_install
+       ${SHELL} ./trash_install
 
 
 UN-INSTALLATION HOW-TO:
 
   Same as above, except for step two, run 'trash_uninstall' instead
 
-       ./trash_uninstall
+       ${SHELL} ./trash_uninstall
 
 
 ABOUT:
@@ -57,7 +57,7 @@ OTHER ABILITIES:
  -  Warns you in varying degrees (soft & hard) as your trash can
     nears maximum capacity.
  -  Install script is included for easy installation.
- -  Un-Install script is included for easy un-installation.
+ -  Uninstall script is included for easy removal.
  -  True multiple-user install/uninstall capabilities.
 
-URL: http://www.yoursitemaster.com/open_source/projects/trashcan/index.htm
+URL: http://github.com/comwt/trashcan
